@@ -1,0 +1,115 @@
+{% extends "base.html" %}
+{% block title %}Register — Qlockain{% endblock %}
+{% block content %}
+<div style="min-height:calc(100vh - 60px);display:flex;align-items:center;justify-content:center;padding:3rem 1rem;">
+  <div style="width:100%;max-width:560px;">
+    <div class="text-center mb-4 fade-in">
+      <div class="hero-tag" style="justify-content:center;display:inline-flex;">
+        <i class="bi bi-shield-plus me-2"></i>Create Your Identity
+      </div>
+      <h1 style="font-family:var(--sans);font-size:2rem;font-weight:800;margin-top:0.75rem;">Join <span class="text-cyan">Qlockain</span></h1>
+      <p style="color:var(--text-dim);font-size:0.9rem;">Your identity will be hashed and anchored to the blockchain upon registration.</p>
+    </div>
+
+    <div class="card-ql fade-in fade-in-1">
+      <form method="POST" action="{{ url_for('register') }}" class="form-ql">
+        <div class="row g-3">
+          <div class="col-12">
+            <label>Full Name</label>
+            <input type="text" name="full_name" placeholder="Enter your full name" required autocomplete="name"/>
+          </div>
+          <div class="col-md-6">
+            <label>Date of Birth</label>
+            <input type="date" name="dob" required/>
+          </div>
+          <div class="col-md-6">
+            <label>Phone Number</label>
+            <input type="tel" name="phone" placeholder="+91 00000 00000" required/>
+          </div>
+          <div class="col-12">
+            <label>Email Address</label>
+            <input type="email" name="email" placeholder="you@example.com" required autocomplete="email"/>
+          </div>
+          <div class="col-12">
+            <label>Username</label>
+            <input type="text" name="username" placeholder="Choose a unique username" required autocomplete="username" pattern="[a-zA-Z0-9_]+" title="Letters, numbers and underscores only"/>
+          </div>
+          <div class="col-md-6">
+            <label>Password</label>
+            <div style="position:relative;">
+              <input type="password" name="password" id="password" placeholder="Min 8 characters" required autocomplete="new-password" style="padding-right:2.5rem;"/>
+              <button type="button" onclick="togglePw('password','eyeIcon1')" style="position:absolute;right:0.75rem;top:50%;transform:translateY(-50%);background:none;border:none;color:var(--text-mute);cursor:pointer;"><i class="bi bi-eye" id="eyeIcon1"></i></button>
+            </div>
+          </div>
+          <div class="col-md-6">
+            <label>Confirm Password</label>
+            <div style="position:relative;">
+              <input type="password" name="confirm_password" id="confirm" placeholder="Repeat password" required autocomplete="new-password" style="padding-right:2.5rem;"/>
+              <button type="button" onclick="togglePw('confirm','eyeIcon2')" style="position:absolute;right:0.75rem;top:50%;transform:translateY(-50%);background:none;border:none;color:var(--text-mute);cursor:pointer;"><i class="bi bi-eye" id="eyeIcon2"></i></button>
+            </div>
+          </div>
+
+          <!-- Password strength -->
+          <div class="col-12">
+            <div style="height:4px;background:var(--border);border-radius:2px;overflow:hidden;margin-top:-0.5rem;">
+              <div id="strengthBar" style="height:100%;width:0;transition:all 0.4s ease;border-radius:2px;background:var(--red);"></div>
+            </div>
+            <div id="strengthText" style="font-family:var(--mono);font-size:0.65rem;color:var(--text-mute);margin-top:0.25rem;"></div>
+          </div>
+
+          <div class="col-12">
+            <div style="background:rgba(0,245,212,0.04);border:1px solid var(--border);border-radius:8px;padding:0.75rem 1rem;font-size:0.78rem;color:var(--text-dim);">
+              <i class="bi bi-info-circle text-cyan me-2"></i>
+              By registering, your identity hash will be permanently recorded on the Qlockain blockchain. This action is irreversible.
+            </div>
+          </div>
+
+          <div class="col-12 mt-2">
+            <button type="submit" class="btn-ql-solid w-100" style="padding:0.85rem;font-size:0.85rem;">
+              <i class="bi bi-shield-plus me-2"></i>Create Blockchain Identity
+            </button>
+          </div>
+        </div>
+      </form>
+      <div class="divider"></div>
+      <p class="text-center" style="font-size:0.85rem;color:var(--text-dim);">Already have an account? <a href="{{ url_for('login') }}" class="text-cyan" style="text-decoration:none;font-weight:600;">Sign In</a></p>
+    </div>
+  </div>
+</div>
+{% endblock %}
+{% block extra_js %}
+<script>
+function togglePw(id, iconId) {
+  const input = document.getElementById(id);
+  const icon = document.getElementById(iconId);
+  if (input.type === 'password') {
+    input.type = 'text';
+    icon.className = 'bi bi-eye-slash';
+  } else {
+    input.type = 'password';
+    icon.className = 'bi bi-eye';
+  }
+}
+document.getElementById('password').addEventListener('input', function() {
+  const val = this.value;
+  const bar = document.getElementById('strengthBar');
+  const txt = document.getElementById('strengthText');
+  let score = 0;
+  if (val.length >= 8) score++;
+  if (/[A-Z]/.test(val)) score++;
+  if (/[0-9]/.test(val)) score++;
+  if (/[^A-Za-z0-9]/.test(val)) score++;
+  const levels = [
+    { w: '25%', c: 'var(--red)',    t: 'Weak' },
+    { w: '50%', c: 'var(--yellow)', t: 'Fair' },
+    { w: '75%', c: '#f97316',       t: 'Good' },
+    { w: '100%', c: 'var(--green)', t: 'Strong' },
+  ];
+  const level = levels[Math.max(0, score - 1)] || levels[0];
+  bar.style.width = val.length ? level.w : '0';
+  bar.style.background = level.c;
+  txt.textContent = val.length ? level.t : '';
+  txt.style.color = level.c;
+});
+</script>
+{% endblock %}

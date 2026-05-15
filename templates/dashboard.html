@@ -1,0 +1,185 @@
+{% extends "base.html" %}
+{% block title %}Dashboard — Qlockain{% endblock %}
+{% block body %}
+<div class="app-layout">
+  <!-- Sidebar -->
+  {% include "_sidebar.html" %}
+  <!-- Main -->
+  <div class="main-content">
+    <!-- Header -->
+    <div class="d-flex align-items-center justify-content-between mb-4 fade-in">
+      <div>
+        <div class="section-label">Overview</div>
+        <h2 class="section-title" style="font-size:1.6rem;">Welcome, {{ current_user.full_name.split()[0] }}</h2>
+      </div>
+      <div style="display:flex;align-items:center;gap:0.75rem;">
+        <span class="badge-ql {% if chain_valid %}badge-success{% else %}badge-danger{% endif %}">
+          <i class="bi bi-{% if chain_valid %}check-circle{% else %}exclamation-triangle{% endif %} me-1"></i>
+          Chain {% if chain_valid %}Valid{% else %}Alert{% endif %}
+        </span>
+        <span style="font-family:var(--mono);font-size:0.68rem;color:var(--text-mute);" id="liveTime"></span>
+      </div>
+    </div>
+
+    <!-- Stats Row -->
+    <div class="row g-3 mb-4">
+      <div class="col-6 col-lg-3 fade-in">
+        <div class="stat-card">
+          <div class="stat-value text-cyan">{{ doc_count }}</div>
+          <div class="stat-label">Documents</div>
+          <div class="stat-icon"><i class="bi bi-folder2"></i></div>
+        </div>
+      </div>
+      <div class="col-6 col-lg-3 fade-in fade-in-1">
+        <div class="stat-card">
+          <div class="stat-value" style="color:var(--green);">{{ ver_count }}</div>
+          <div class="stat-label">Verifications</div>
+          <div class="stat-icon"><i class="bi bi-shield-check"></i></div>
+        </div>
+      </div>
+      <div class="col-6 col-lg-3 fade-in fade-in-2">
+        <div class="stat-card">
+          <div class="stat-value" style="color:var(--yellow);">{{ unread_count }}</div>
+          <div class="stat-label">Unread Alerts</div>
+          <div class="stat-icon"><i class="bi bi-bell"></i></div>
+        </div>
+      </div>
+      <div class="col-6 col-lg-3 fade-in fade-in-3">
+        <div class="stat-card">
+          <div class="stat-value" style="color:{% if current_user.is_verified %}var(--green){% else %}var(--red){% endif %};">
+            {% if current_user.is_verified %}✓{% else %}✗{% endif %}
+          </div>
+          <div class="stat-label">Identity Status</div>
+          <div class="stat-icon"><i class="bi bi-person-badge"></i></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="row g-4">
+      <!-- Identity Card Preview -->
+      <div class="col-lg-5 fade-in fade-in-1">
+        <div class="card-ql h-100">
+          <div class="d-flex align-items-center justify-content-between mb-3">
+            <h5 style="font-family:var(--sans);font-weight:700;font-size:1rem;margin:0;">Digital Identity</h5>
+            <a href="{{ url_for('identity') }}" class="btn-ql" style="padding:0.3rem 0.85rem;font-size:0.68rem;">View Full</a>
+          </div>
+          <div style="background:linear-gradient(135deg,#0c1428,#0a1a35);border:1px solid var(--border-2);border-radius:14px;padding:1.25rem;position:relative;overflow:hidden;">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;">
+              <span style="font-family:var(--sans);font-weight:800;font-size:0.85rem;color:var(--cyan);">QLOCKAIN</span>
+              <span class="badge-ql {% if current_user.is_verified %}badge-success{% else %}badge-warning{% endif %}" style="font-size:0.6rem;">
+                {% if current_user.is_verified %}VERIFIED{% else %}PENDING{% endif %}
+              </span>
+            </div>
+            <div style="font-family:var(--sans);font-size:1.1rem;font-weight:700;margin-bottom:0.25rem;">{{ current_user.full_name }}</div>
+            <div style="font-family:var(--mono);font-size:0.65rem;color:var(--cyan);margin-bottom:1rem;">ID: {{ current_user.get_short_uid() }}</div>
+            {% if current_user.qr_code_path %}
+            <img src="{{ url_for('static', filename=current_user.qr_code_path) }}" width="70" height="70" style="border-radius:6px;border:1px solid var(--border-2);" alt="QR"/>
+            {% endif %}
+            <div style="margin-top:0.75rem;">
+              <div style="font-family:var(--mono);font-size:0.6rem;color:var(--text-mute);margin-bottom:0.2rem;">IDENTITY HASH</div>
+              <div class="hash-display" style="font-size:0.6rem;padding:0.4rem 0.6rem;">{{ current_user.identity_hash[:32] }}...</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Recent Alerts -->
+      <div class="col-lg-7 fade-in fade-in-2">
+        <div class="card-ql h-100">
+          <div class="d-flex align-items-center justify-content-between mb-3">
+            <h5 style="font-family:var(--sans);font-weight:700;font-size:1rem;margin:0;">Recent Alerts <span class="badge-ql badge-danger ms-2" style="font-size:0.6rem;">{{ unread_count }} new</span></h5>
+            <a href="{{ url_for('alerts') }}" class="btn-ql" style="padding:0.3rem 0.85rem;font-size:0.68rem;">View All</a>
+          </div>
+          {% if alerts %}
+            {% for alert in alerts %}
+            <div class="alert-item">
+              <div class="alert-icon {{ alert.severity }}">
+                <i class="bi bi-{% if alert.severity=='success' %}check-circle{% elif alert.severity=='danger' %}exclamation-triangle{% elif alert.severity=='warning' %}exclamation-circle{% else %}info-circle{% endif %}"></i>
+              </div>
+              <div style="flex:1;min-width:0;">
+                <div class="alert-title">{{ alert.title }}</div>
+                <div class="alert-msg">{{ alert.message[:80] }}{% if alert.message|length > 80 %}...{% endif %}</div>
+                <div class="alert-time">{{ alert.created_at.strftime('%Y-%m-%d %H:%M') }}</div>
+              </div>
+            </div>
+            {% endfor %}
+          {% else %}
+            <div style="text-align:center;padding:2rem;color:var(--text-mute);">
+              <i class="bi bi-bell-slash" style="font-size:2rem;display:block;margin-bottom:0.75rem;"></i>
+              <div style="font-family:var(--mono);font-size:0.78rem;">No new alerts</div>
+            </div>
+          {% endif %}
+        </div>
+      </div>
+
+      <!-- Recent Documents -->
+      <div class="col-12 fade-in fade-in-3">
+        <div class="card-ql">
+          <div class="d-flex align-items-center justify-content-between mb-3">
+            <h5 style="font-family:var(--sans);font-weight:700;font-size:1rem;margin:0;">Recent Documents</h5>
+            <a href="{{ url_for('upload') }}" class="btn-ql-solid" style="padding:0.4rem 1rem;font-size:0.72rem;"><i class="bi bi-plus me-1"></i>Upload</a>
+          </div>
+          {% if docs %}
+          <div style="overflow-x:auto;">
+            <table class="table-ql">
+              <thead><tr>
+                <th>Document</th><th>Type</th><th>Size</th><th>Block</th><th>Uploaded</th><th>Status</th>
+              </tr></thead>
+              <tbody>
+              {% for doc in docs %}
+              <tr>
+                <td><i class="bi bi-file-earmark-{% if doc.file_type=='PDF' %}pdf text-danger{% elif doc.file_type in ['JPG','JPEG','PNG'] %}image text-cyan{% else %}word{% endif %} me-2"></i>{{ doc.original_name[:30] }}{% if doc.original_name|length > 30 %}...{% endif %}</td>
+                <td><span class="badge-ql badge-cyan" style="font-size:0.6rem;">{{ doc.file_type }}</span></td>
+                <td style="font-family:var(--mono);font-size:0.78rem;color:var(--text-dim);">{{ (doc.file_size / 1024)|round(1) }} KB</td>
+                <td><span class="text-cyan mono" style="font-size:0.78rem;">#{{ doc.blockchain_block }}</span></td>
+                <td style="font-family:var(--mono);font-size:0.75rem;color:var(--text-dim);">{{ doc.uploaded_at.strftime('%b %d, %Y') }}</td>
+                <td><span class="badge-ql {% if doc.is_verified %}badge-success{% else %}badge-warning{% endif %}" style="font-size:0.6rem;">{% if doc.is_verified %}Verified{% else %}Pending{% endif %}</span></td>
+              </tr>
+              {% endfor %}
+              </tbody>
+            </table>
+          </div>
+          {% else %}
+          <div style="text-align:center;padding:3rem;color:var(--text-mute);">
+            <i class="bi bi-folder-plus" style="font-size:2.5rem;display:block;margin-bottom:1rem;color:var(--border-2);"></i>
+            <div style="font-family:var(--mono);font-size:0.8rem;margin-bottom:1rem;">No documents in vault</div>
+            <a href="{{ url_for('upload') }}" class="btn-ql" style="padding:0.5rem 1.5rem;font-size:0.75rem;">Upload First Document</a>
+          </div>
+          {% endif %}
+        </div>
+      </div>
+
+      <!-- Blockchain Health -->
+      <div class="col-12 fade-in fade-in-4">
+        <div class="card-ql" style="background:linear-gradient(135deg,rgba(0,245,212,0.03),rgba(0,102,255,0.03));">
+          <div class="d-flex align-items-center justify-content-between">
+            <div>
+              <div class="section-label">Blockchain Status</div>
+              <h5 style="font-family:var(--sans);font-weight:700;margin:0.25rem 0;">
+                {% if chain_valid %}
+                  <span class="text-success"><i class="bi bi-check-circle-fill me-2"></i>Chain Integrity Verified</span>
+                {% else %}
+                  <span class="text-danger"><i class="bi bi-exclamation-triangle-fill me-2"></i>Chain Anomaly Detected</span>
+                {% endif %}
+              </h5>
+              <p style="color:var(--text-dim);font-size:0.82rem;margin-top:0.25rem;">{{ chain_msg }}</p>
+            </div>
+            <a href="{{ url_for('blockchain_explorer') }}" class="btn-ql" style="padding:0.5rem 1.25rem;font-size:0.75rem;white-space:nowrap;">
+              <i class="bi bi-boxes me-1"></i>Explorer
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+{% block extra_js %}
+<script>
+function updateTime() {
+  const el = document.getElementById('liveTime');
+  if (el) el.textContent = new Date().toLocaleTimeString('en-GB', {hour12:false});
+}
+updateTime(); setInterval(updateTime, 1000);
+</script>
+{% endblock %}

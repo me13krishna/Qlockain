@@ -1,0 +1,130 @@
+{% extends "base.html" %}
+{% block title %}Profile Settings — Qlockain{% endblock %}
+{% block body %}
+<div class="app-layout">
+  {% include "_sidebar.html" %}
+  <div class="main-content">
+    <div class="mb-4 fade-in">
+      <div class="section-label">Account</div>
+      <h2 class="section-title" style="font-size:1.6rem;">Profile Settings</h2>
+    </div>
+
+    <div class="row g-4">
+      <!-- Avatar & Info -->
+      <div class="col-lg-4 fade-in fade-in-1">
+        <div class="card-ql text-center">
+          <div style="position:relative;display:inline-block;margin-bottom:1rem;">
+            {% if current_user.profile_image %}
+            <img src="{{ url_for('static', filename=current_user.profile_image) }}" width="100" height="100" style="border-radius:50%;border:3px solid var(--border-2);object-fit:cover;" alt="Avatar"/>
+            {% else %}
+            <div style="width:100px;height:100px;border-radius:50%;background:linear-gradient(135deg,var(--cyan),var(--blue));display:flex;align-items:center;justify-content:center;font-family:var(--sans);font-size:2.5rem;font-weight:900;color:var(--bg);margin:0 auto;border:3px solid var(--border-2);">
+              {{ current_user.full_name[0].upper() }}
+            </div>
+            {% endif %}
+          </div>
+          <h4 style="font-family:var(--sans);font-weight:700;margin-bottom:0.25rem;">{{ current_user.full_name }}</h4>
+          <div style="font-family:var(--mono);font-size:0.72rem;color:var(--cyan);margin-bottom:0.25rem;">@{{ current_user.username }}</div>
+          <div style="font-family:var(--mono);font-size:0.65rem;color:var(--text-mute);margin-bottom:1rem;">{{ current_user.email }}</div>
+          <span class="badge-ql {% if current_user.is_verified %}badge-success{% else %}badge-warning{% endif %}" style="font-size:0.65rem;">
+            {% if current_user.is_verified %}<i class="bi bi-patch-check me-1"></i>Blockchain Verified{% else %}<i class="bi bi-clock me-1"></i>Pending Verification{% endif %}
+          </span>
+          {% if current_user.is_admin %}
+          <div class="mt-2"><span class="badge-ql badge-warning" style="font-size:0.65rem;"><i class="bi bi-shield-lock me-1"></i>Administrator</span></div>
+          {% endif %}
+
+          <div class="divider"></div>
+
+          <!-- Upload Avatar -->
+          <form method="POST" action="{{ url_for('profile') }}" enctype="multipart/form-data" class="form-ql">
+            <input type="hidden" name="action" value="upload_avatar"/>
+            <label>Profile Photo</label>
+            <input type="file" name="avatar" accept=".jpg,.jpeg,.png" onchange="this.form.submit()" style="cursor:pointer;"/>
+            <div style="font-family:var(--mono);font-size:0.62rem;color:var(--text-mute);margin-top:0.3rem;">JPG, PNG only</div>
+          </form>
+        </div>
+
+        <!-- Quick Info -->
+        <div class="card-ql mt-4">
+          <h6 style="font-family:var(--mono);font-size:0.7rem;letter-spacing:0.1em;text-transform:uppercase;color:var(--text-mute);margin-bottom:1rem;">Account Info</h6>
+          {% for label, val in [
+            ('Member Since', current_user.created_at.strftime('%d %b %Y')),
+            ('Last Login', current_user.last_login.strftime('%d %b %Y %H:%M') if current_user.last_login else 'N/A'),
+            ('User ID', current_user.get_short_uid()),
+          ] %}
+          <div style="display:flex;justify-content:space-between;padding:0.5rem 0;border-bottom:1px solid var(--border);">
+            <span style="font-family:var(--mono);font-size:0.7rem;color:var(--text-mute);">{{ label }}</span>
+            <span style="font-family:var(--mono);font-size:0.72rem;color:var(--text);">{{ val }}</span>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+
+      <!-- Settings Forms -->
+      <div class="col-lg-8 fade-in fade-in-2">
+        <!-- Update Info -->
+        <div class="card-ql mb-4">
+          <h5 style="font-family:var(--sans);font-weight:700;margin-bottom:1.5rem;"><i class="bi bi-person-gear me-2 text-cyan"></i>Update Profile</h5>
+          <form method="POST" action="{{ url_for('profile') }}" class="form-ql">
+            <input type="hidden" name="action" value="update_info"/>
+            <div class="row g-3">
+              <div class="col-md-6">
+                <label>Full Name</label>
+                <input type="text" name="full_name" value="{{ current_user.full_name }}" required/>
+              </div>
+              <div class="col-md-6">
+                <label>Phone Number</label>
+                <input type="tel" name="phone" value="{{ current_user.phone }}"/>
+              </div>
+              <div class="col-12">
+                <label>Email (Read-only)</label>
+                <input type="email" value="{{ current_user.email }}" disabled style="opacity:0.5;cursor:not-allowed;"/>
+              </div>
+              <div class="col-12">
+                <button type="submit" class="btn-ql-solid" style="padding:0.65rem 2rem;font-size:0.8rem;"><i class="bi bi-floppy me-2"></i>Save Changes</button>
+              </div>
+            </div>
+          </form>
+        </div>
+
+        <!-- Change Password -->
+        <div class="card-ql mb-4">
+          <h5 style="font-family:var(--sans);font-weight:700;margin-bottom:1.5rem;"><i class="bi bi-key me-2 text-cyan"></i>Change Password</h5>
+          <form method="POST" action="{{ url_for('profile') }}" class="form-ql">
+            <input type="hidden" name="action" value="change_password"/>
+            <div class="row g-3">
+              <div class="col-12">
+                <label>Current Password</label>
+                <input type="password" name="old_password" placeholder="Enter current password" required autocomplete="current-password"/>
+              </div>
+              <div class="col-md-6">
+                <label>New Password</label>
+                <input type="password" name="new_password" placeholder="Min 8 characters" required autocomplete="new-password"/>
+              </div>
+              <div class="col-md-6">
+                <label>Confirm New Password</label>
+                <input type="password" name="confirm_password" placeholder="Repeat new password" required autocomplete="new-password"/>
+              </div>
+              <div class="col-12">
+                <button type="submit" class="btn-ql" style="padding:0.65rem 2rem;font-size:0.8rem;"><i class="bi bi-shield-lock me-2"></i>Update Password</button>
+              </div>
+            </div>
+          </form>
+        </div>
+
+        <!-- Identity Hash -->
+        <div class="card-ql" style="background:rgba(0,245,212,0.02);">
+          <h5 style="font-family:var(--sans);font-weight:700;margin-bottom:1rem;"><i class="bi bi-fingerprint me-2 text-cyan"></i>Blockchain Identity</h5>
+          <div class="mb-3">
+            <div style="font-family:var(--mono);font-size:0.65rem;letter-spacing:0.1em;text-transform:uppercase;color:var(--text-mute);margin-bottom:0.4rem;">Your SHA-256 Identity Hash</div>
+            <div class="hash-display" style="font-size:0.65rem;">{{ current_user.identity_hash }}</div>
+          </div>
+          <div style="font-family:var(--mono);font-size:0.72rem;color:var(--text-dim);">
+            <i class="bi bi-info-circle text-cyan me-1"></i>
+            This hash is immutably stored on the Qlockain blockchain. It cannot be changed without re-registration.
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

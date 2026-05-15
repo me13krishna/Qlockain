@@ -1,0 +1,158 @@
+{% extends "base.html" %}
+{% block title %}Blockchain Explorer — Qlockain{% endblock %}
+{% block body %}
+<div class="app-layout">
+  {% include "_sidebar.html" %}
+  <div class="main-content">
+    <div class="d-flex align-items-center justify-content-between mb-4 fade-in">
+      <div>
+        <div class="section-label">Distributed Ledger</div>
+        <h2 class="section-title" style="font-size:1.6rem;">Blockchain Explorer</h2>
+      </div>
+      <div style="display:flex;align-items:center;gap:0.75rem;">
+        <span class="badge-ql {% if stats.is_valid %}badge-success{% else %}badge-danger{% endif %}">
+          <i class="bi bi-{% if stats.is_valid %}check-circle{% else %}exclamation-triangle{% endif %} me-1"></i>
+          Chain {% if stats.is_valid %}Valid{% else %}Alert{% endif %}
+        </span>
+      </div>
+    </div>
+
+    <!-- Chain Stats -->
+    <div class="row g-3 mb-4 fade-in fade-in-1">
+      <div class="col-6 col-md-3">
+        <div class="stat-card">
+          <div class="stat-value text-cyan">{{ stats.total_blocks }}</div>
+          <div class="stat-label">Total Blocks</div>
+        </div>
+      </div>
+      <div class="col-6 col-md-3">
+        <div class="stat-card">
+          <div class="stat-value" style="color:var(--purple);">{{ stats.difficulty }}</div>
+          <div class="stat-label">Difficulty</div>
+        </div>
+      </div>
+      <div class="col-6 col-md-3">
+        <div class="stat-card">
+          <div class="stat-value" style="color:var(--green);font-size:1.5rem;">{{ stats.last_block_hash[:8] }}...</div>
+          <div class="stat-label">Latest Hash</div>
+        </div>
+      </div>
+      <div class="col-6 col-md-3">
+        <div class="stat-card">
+          <div class="stat-value" style="color:{% if stats.is_valid %}var(--green){% else %}var(--red){% endif %};">{% if stats.is_valid %}✓{% else %}✗{% endif %}</div>
+          <div class="stat-label">Integrity</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tabs -->
+    <div style="display:flex;gap:0.5rem;margin-bottom:1.5rem;" class="fade-in fade-in-2">
+      <button class="admin-tab active" onclick="switchTab(this,'vizTab')">Chain Visualization</button>
+      <button class="admin-tab" onclick="switchTab(this,'tableTab')">Block Table</button>
+    </div>
+
+    <!-- Chain Visualization -->
+    <div id="vizTab" class="fade-in fade-in-2">
+      <div class="blockchain-viz">
+        {% for block in blocks %}
+        <div class="bc-block">
+          <div class="bc-block-num {% if block.index == 0 %}pulse-glow{% endif %}">
+            {% if block.index == 0 %}G{% else %}{{ '%02d'|format(block.index) }}{% endif %}
+          </div>
+          <div class="bc-block-content">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:0.75rem;flex-wrap:wrap;gap:0.5rem;">
+              <div style="display:flex;align-items:center;gap:0.75rem;">
+                <span style="font-family:var(--sans);font-weight:700;font-size:0.95rem;">Block #{{ block.index }}</span>
+                <span class="block-type-badge badge-ql {% if block.data.type == 'GENESIS' %}badge-cyan{% elif block.data.type == 'IDENTITY_REGISTRATION' %}badge-success{% elif block.data.type == 'DOCUMENT_UPLOAD' %}badge-info{% elif block.data.type == 'VERIFICATION_LOG' %}badge-warning{% else %}badge-cyan{% endif %}" style="font-size:0.6rem;">
+                  {{ block.data.get('type','UNKNOWN') if block.data is mapping else 'DATA' }}
+                </span>
+              </div>
+              <span style="font-family:var(--mono);font-size:0.65rem;color:var(--text-mute);">{{ block.timestamp_readable }}</span>
+            </div>
+            <div class="row g-2">
+              <div class="col-md-6">
+                <div style="font-family:var(--mono);font-size:0.6rem;color:var(--text-mute);margin-bottom:0.2rem;">BLOCK HASH</div>
+                <div class="hash-display" style="font-size:0.58rem;padding:0.3rem 0.6rem;">{{ block.hash[:40] }}...</div>
+              </div>
+              <div class="col-md-6">
+                <div style="font-family:var(--mono);font-size:0.6rem;color:var(--text-mute);margin-bottom:0.2rem;">PREV HASH</div>
+                <div class="hash-display" style="font-size:0.58rem;padding:0.3rem 0.6rem;border-color:rgba(100,100,200,0.3);color:var(--text-dim);">{{ block.previous_hash[:40] }}...</div>
+              </div>
+              <div class="col-auto">
+                <div style="font-family:var(--mono);font-size:0.6rem;color:var(--text-mute);margin-bottom:0.2rem;">NONCE</div>
+                <div style="font-family:var(--mono);font-size:0.8rem;color:var(--yellow);">{{ block.nonce }}</div>
+              </div>
+              <div class="col-auto">
+                <div style="font-family:var(--mono);font-size:0.6rem;color:var(--text-mute);margin-bottom:0.2rem;">INDEX</div>
+                <div style="font-family:var(--mono);font-size:0.8rem;color:var(--cyan);">#{{ block.index }}</div>
+              </div>
+              {% if block.data is mapping %}
+              {% if block.data.get('username') %}
+              <div class="col-auto">
+                <div style="font-family:var(--mono);font-size:0.6rem;color:var(--text-mute);margin-bottom:0.2rem;">USER</div>
+                <div style="font-family:var(--mono);font-size:0.78rem;color:var(--text-dim);">@{{ block.data.username }}</div>
+              </div>
+              {% endif %}
+              {% if block.data.get('filename') %}
+              <div class="col-auto">
+                <div style="font-family:var(--mono);font-size:0.6rem;color:var(--text-mute);margin-bottom:0.2rem;">FILE</div>
+                <div style="font-family:var(--mono);font-size:0.78rem;color:var(--text-dim);">{{ block.data.filename[:20] }}</div>
+              </div>
+              {% endif %}
+              {% endif %}
+            </div>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+
+    <!-- Block Table -->
+    <div id="tableTab" style="display:none;" class="fade-in">
+      <div class="card-ql" style="padding:0;overflow:hidden;">
+        <div style="overflow-x:auto;">
+          <table class="table-ql">
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Type</th>
+                <th>Block Hash</th>
+                <th>Nonce</th>
+                <th>Timestamp</th>
+                <th>Data Ref</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for b in db_blocks %}
+              <tr>
+                <td><span class="text-cyan mono">#{{ b.block_index }}</span></td>
+                <td>
+                  <span class="badge-ql {% if b.data_type == 'IDENTITY_REGISTRATION' %}badge-success{% elif b.data_type == 'DOCUMENT_UPLOAD' %}badge-info{% elif b.data_type == 'VERIFICATION_LOG' %}badge-warning{% else %}badge-cyan{% endif %}" style="font-size:0.6rem;">
+                    {{ b.data_type }}
+                  </span>
+                </td>
+                <td><div class="hash-display" style="font-size:0.6rem;padding:0.3rem 0.6rem;">{{ b.block_hash[:20] }}...</div></td>
+                <td style="font-family:var(--mono);font-size:0.78rem;color:var(--yellow);">{{ b.nonce }}</td>
+                <td style="font-family:var(--mono);font-size:0.72rem;color:var(--text-dim);">{{ b.created_at.strftime('%d %b %Y %H:%M') }}</td>
+                <td style="font-family:var(--mono);font-size:0.68rem;color:var(--text-mute);">{{ (b.data_ref or '')[:20] }}{% if b.data_ref and b.data_ref|length > 20 %}...{% endif %}</td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+{% block extra_js %}
+<script>
+function switchTab(btn, tabId) {
+  document.querySelectorAll('.admin-tab').forEach(t => t.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('vizTab').style.display = 'none';
+  document.getElementById('tableTab').style.display = 'none';
+  document.getElementById(tabId).style.display = 'block';
+}
+</script>
+{% endblock %}

@@ -1,0 +1,258 @@
+{% extends "base.html" %}
+{% block title %}Admin Dashboard — Qlockain{% endblock %}
+{% block body %}
+<div class="app-layout">
+  {% include "_sidebar.html" %}
+  <div class="main-content">
+    <div class="d-flex align-items-center justify-content-between mb-4 fade-in">
+      <div>
+        <div class="section-label" style="color:var(--yellow);">Administrator</div>
+        <h2 class="section-title" style="font-size:1.6rem;">Admin Dashboard</h2>
+      </div>
+      <span class="badge-ql badge-warning"><i class="bi bi-shield-lock me-1"></i>Admin Access</span>
+    </div>
+
+    <!-- Admin Stats -->
+    <div class="row g-3 mb-4 fade-in fade-in-1">
+      <div class="col-6 col-lg-3">
+        <div class="stat-card">
+          <div class="stat-value text-cyan">{{ users|length }}</div>
+          <div class="stat-label">Total Users</div>
+          <div class="stat-icon"><i class="bi bi-people"></i></div>
+        </div>
+      </div>
+      <div class="col-6 col-lg-3">
+        <div class="stat-card">
+          <div class="stat-value" style="color:var(--green);">{{ docs|length }}</div>
+          <div class="stat-label">Documents</div>
+          <div class="stat-icon"><i class="bi bi-files"></i></div>
+        </div>
+      </div>
+      <div class="col-6 col-lg-3">
+        <div class="stat-card">
+          <div class="stat-value" style="color:var(--purple);">{{ bc_stats.total_blocks }}</div>
+          <div class="stat-label">Blocks Mined</div>
+          <div class="stat-icon"><i class="bi bi-boxes"></i></div>
+        </div>
+      </div>
+      <div class="col-6 col-lg-3">
+        <div class="stat-card">
+          <div class="stat-value" style="color:var(--red);">{{ suspicious|length }}</div>
+          <div class="stat-label">Suspicious Events</div>
+          <div class="stat-icon"><i class="bi bi-exclamation-triangle"></i></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tabs -->
+    <div style="display:flex;gap:0.5rem;margin-bottom:1.5rem;flex-wrap:wrap;" class="fade-in fade-in-2">
+      <button class="admin-tab active" onclick="switchTab(this,'usersTab')">👥 Users</button>
+      <button class="admin-tab" onclick="switchTab(this,'docsTab')">📁 Documents</button>
+      <button class="admin-tab" onclick="switchTab(this,'alertsTab')">🔔 Alerts</button>
+      <button class="admin-tab" onclick="switchTab(this,'suspTab')">🚨 Suspicious</button>
+      <button class="admin-tab" onclick="switchTab(this,'chainTab')">⛓️ Blockchain</button>
+    </div>
+
+    <!-- Users Tab -->
+    <div id="usersTab" class="fade-in fade-in-2">
+      <!-- Search -->
+      <div class="card-ql mb-3" style="padding:1rem 1.25rem;">
+        <div style="display:flex;gap:0.75rem;align-items:center;">
+          <input type="text" id="userSearch" placeholder="Search users by name, email, username..." oninput="searchUsers(this.value)"
+            style="flex:1;background:rgba(8,14,32,0.8);border:1px solid var(--border);border-radius:8px;padding:0.6rem 1rem;color:var(--text);font-size:0.85rem;outline:none;font-family:var(--body);"/>
+          <i class="bi bi-search" style="color:var(--text-mute);"></i>
+        </div>
+        <div id="searchResults" style="margin-top:0.75rem;"></div>
+      </div>
+
+      <div class="card-ql" style="padding:0;overflow:hidden;">
+        <div style="overflow-x:auto;">
+          <table class="table-ql">
+            <thead><tr>
+              <th>User</th><th>Email</th><th>Status</th><th>Registered</th><th>Last Login</th><th>Docs</th><th>Actions</th>
+            </tr></thead>
+            <tbody>
+              {% for user in users %}
+              <tr {% if user.is_admin %}style="background:rgba(255,214,10,0.02);"{% endif %}>
+                <td>
+                  <div style="display:flex;align-items:center;gap:0.6rem;">
+                    <div style="width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,var(--cyan),var(--blue));display:flex;align-items:center;justify-content:center;font-weight:700;font-size:0.75rem;color:var(--bg);flex-shrink:0;">{{ user.full_name[0].upper() }}</div>
+                    <div>
+                      <div style="font-weight:600;font-size:0.85rem;">{{ user.full_name }}</div>
+                      <div style="font-family:var(--mono);font-size:0.62rem;color:var(--text-mute);">@{{ user.username }}</div>
+                    </div>
+                  </div>
+                </td>
+                <td style="font-size:0.82rem;color:var(--text-dim);">{{ user.email }}</td>
+                <td>
+                  <span class="badge-ql {% if user.is_verified %}badge-success{% else %}badge-warning{% endif %}" style="font-size:0.6rem;">{% if user.is_verified %}Verified{% else %}Pending{% endif %}</span>
+                  {% if user.is_admin %}<span class="badge-ql badge-warning ms-1" style="font-size:0.6rem;">Admin</span>{% endif %}
+                </td>
+                <td style="font-family:var(--mono);font-size:0.72rem;color:var(--text-dim);">{{ user.created_at.strftime('%d %b %Y') }}</td>
+                <td style="font-family:var(--mono);font-size:0.72rem;color:var(--text-dim);">{{ user.last_login.strftime('%d %b %Y') if user.last_login else '—' }}</td>
+                <td style="font-family:var(--mono);font-size:0.8rem;color:var(--cyan);">{{ user.documents|length }}</td>
+                <td>
+                  {% if not user.is_admin %}
+                  <form method="POST" action="{{ url_for('admin_delete_user', user_id=user.id) }}" onsubmit="return confirm('Delete user {{ user.username }}? This is irreversible.')">
+                    <button type="submit" class="btn-danger-ql" style="font-size:0.65rem;padding:0.3rem 0.75rem;"><i class="bi bi-trash3 me-1"></i>Delete</button>
+                  </form>
+                  {% else %}
+                  <span style="font-family:var(--mono);font-size:0.65rem;color:var(--text-mute);">Protected</span>
+                  {% endif %}
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- Documents Tab -->
+    <div id="docsTab" style="display:none;">
+      <div class="card-ql" style="padding:0;overflow:hidden;">
+        <div style="overflow-x:auto;">
+          <table class="table-ql">
+            <thead><tr>
+              <th>Document</th><th>Owner</th><th>Type</th><th>Size</th><th>Block</th><th>Uploaded</th><th>Action</th>
+            </tr></thead>
+            <tbody>
+              {% for doc in docs %}
+              <tr>
+                <td>
+                  <div style="display:flex;align-items:center;gap:0.5rem;">
+                    <i class="bi bi-file-earmark-{% if doc.file_type=='PDF' %}pdf text-danger{% elif doc.file_type in ['JPG','JPEG','PNG'] %}image text-cyan{% else %}word{% endif %}"></i>
+                    <span style="font-size:0.82rem;">{{ doc.original_name[:25] }}{% if doc.original_name|length > 25 %}...{% endif %}</span>
+                  </div>
+                </td>
+                <td style="font-family:var(--mono);font-size:0.72rem;color:var(--cyan);">@{{ doc.owner.username }}</td>
+                <td><span class="badge-ql badge-cyan" style="font-size:0.6rem;">{{ doc.file_type }}</span></td>
+                <td style="font-family:var(--mono);font-size:0.72rem;color:var(--text-dim);">{{ (doc.file_size/1024)|round(1) }} KB</td>
+                <td><span class="text-cyan mono" style="font-size:0.78rem;">#{{ doc.blockchain_block }}</span></td>
+                <td style="font-family:var(--mono);font-size:0.7rem;color:var(--text-dim);">{{ doc.uploaded_at.strftime('%d %b %Y') }}</td>
+                <td>
+                  <form method="POST" action="{{ url_for('admin_delete_doc', doc_id=doc.id) }}" onsubmit="return confirm('Delete this document permanently?')">
+                    <button type="submit" class="btn-danger-ql" style="font-size:0.65rem;padding:0.3rem 0.75rem;"><i class="bi bi-trash3 me-1"></i>Delete</button>
+                  </form>
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- Alerts Tab -->
+    <div id="alertsTab" style="display:none;">
+      {% for alert in alerts_all %}
+      <div class="alert-item">
+        <div class="alert-icon {{ alert.severity }}">
+          {% if alert.severity == 'success' %}<i class="bi bi-check-circle"></i>
+          {% elif alert.severity == 'danger' %}<i class="bi bi-exclamation-triangle"></i>
+          {% elif alert.severity == 'warning' %}<i class="bi bi-exclamation-circle"></i>
+          {% else %}<i class="bi bi-info-circle"></i>{% endif %}
+        </div>
+        <div style="flex:1;min-width:0;">
+          <div style="display:flex;gap:0.5rem;align-items:center;flex-wrap:wrap;">
+            <span class="alert-title">{{ alert.title }}</span>
+            <span class="badge-ql badge-{{ alert.severity }}" style="font-size:0.58rem;">{{ alert.alert_type }}</span>
+            <span style="font-family:var(--mono);font-size:0.62rem;color:var(--cyan);">@{{ alert.user.username }}</span>
+          </div>
+          <div class="alert-msg">{{ alert.message }}</div>
+          <div class="alert-time"><i class="bi bi-clock me-1"></i>{{ alert.created_at.strftime('%Y-%m-%d %H:%M:%S') }} · IP: {{ alert.ip_address or 'N/A' }}</div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+
+    <!-- Suspicious Tab -->
+    <div id="suspTab" style="display:none;">
+      {% if suspicious %}
+      {% for alert in suspicious %}
+      <div class="alert-item" style="border-color:rgba(255,51,102,0.3);">
+        <div class="alert-icon danger"><i class="bi bi-exclamation-triangle-fill"></i></div>
+        <div style="flex:1;min-width:0;">
+          <div style="display:flex;gap:0.5rem;align-items:center;flex-wrap:wrap;">
+            <span class="alert-title text-danger">{{ alert.title }}</span>
+            <span style="font-family:var(--mono);font-size:0.62rem;color:var(--cyan);">@{{ alert.user.username }}</span>
+          </div>
+          <div class="alert-msg">{{ alert.message }}</div>
+          <div class="alert-time"><i class="bi bi-clock me-1"></i>{{ alert.created_at.strftime('%Y-%m-%d %H:%M:%S') }} · IP: {{ alert.ip_address or 'N/A' }}</div>
+          {% if alert.user_agent %}
+          <div class="alert-time"><i class="bi bi-display me-1"></i>{{ alert.user_agent[:80] }}</div>
+          {% endif %}
+        </div>
+      </div>
+      {% endfor %}
+      {% else %}
+      <div class="card-ql text-center" style="padding:3rem;">
+        <i class="bi bi-shield-check" style="font-size:3rem;color:var(--green);display:block;margin-bottom:1rem;"></i>
+        <div style="font-family:var(--sans);font-weight:700;">No suspicious activity detected</div>
+        <div style="color:var(--text-dim);font-size:0.82rem;margin-top:0.4rem;">All systems normal</div>
+      </div>
+      {% endif %}
+    </div>
+
+    <!-- Chain Tab -->
+    <div id="chainTab" style="display:none;">
+      <div class="card-ql mb-4">
+        <h5 style="font-family:var(--sans);font-weight:700;margin-bottom:1.25rem;"><i class="bi bi-boxes text-cyan me-2"></i>Blockchain Status</h5>
+        <div class="row g-3">
+          {% for label, val, color in [
+            ('Total Blocks', bc_stats.total_blocks, 'var(--cyan)'),
+            ('Difficulty', bc_stats.difficulty, 'var(--purple)'),
+            ('Chain Valid', '✓ YES' if bc_stats.is_valid else '✗ NO', 'var(--green)' if bc_stats.is_valid else 'var(--red)'),
+          ] %}
+          <div class="col-md-4">
+            <div style="font-family:var(--mono);font-size:0.65rem;color:var(--text-mute);margin-bottom:0.3rem;">{{ label }}</div>
+            <div style="font-family:var(--sans);font-size:1.5rem;font-weight:800;color:{{ color }};">{{ val }}</div>
+          </div>
+          {% endfor %}
+          <div class="col-12">
+            <div style="font-family:var(--mono);font-size:0.65rem;color:var(--text-mute);margin-bottom:0.3rem;">Latest Block Hash</div>
+            <div class="hash-display" style="font-size:0.65rem;">{{ bc_stats.last_block_hash }}</div>
+          </div>
+          <div class="col-12">
+            <div style="font-family:var(--mono);font-size:0.65rem;color:var(--text-mute);margin-bottom:0.3rem;">Genesis Hash</div>
+            <div class="hash-display" style="font-size:0.65rem;border-color:rgba(100,100,200,0.3);color:var(--text-dim);">{{ bc_stats.genesis_hash }}</div>
+          </div>
+        </div>
+        <div class="mt-3">
+          <a href="{{ url_for('blockchain_explorer') }}" class="btn-ql" style="padding:0.55rem 1.5rem;font-size:0.78rem;"><i class="bi bi-boxes me-1"></i>Open Full Explorer</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+{% block extra_js %}
+<script>
+function switchTab(btn, tabId) {
+  document.querySelectorAll('.admin-tab').forEach(t => t.classList.remove('active'));
+  btn.classList.add('active');
+  ['usersTab','docsTab','alertsTab','suspTab','chainTab'].forEach(id => {
+    document.getElementById(id).style.display = 'none';
+  });
+  document.getElementById(tabId).style.display = 'block';
+}
+
+async function searchUsers(query) {
+  const container = document.getElementById('searchResults');
+  if (!query || query.length < 2) { container.innerHTML = ''; return; }
+  const resp = await fetch(`/admin/search?q=${encodeURIComponent(query)}`);
+  const users = await resp.json();
+  if (!users.length) { container.innerHTML = '<div style="font-family:var(--mono);font-size:0.75rem;color:var(--text-mute);">No users found</div>'; return; }
+  container.innerHTML = users.map(u => `
+    <div style="display:flex;align-items:center;gap:1rem;padding:0.5rem 0;border-bottom:1px solid var(--border);">
+      <div style="width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,var(--cyan),var(--blue));display:flex;align-items:center;justify-content:center;font-size:0.7rem;font-weight:700;color:var(--bg);">${u.full_name[0].toUpperCase()}</div>
+      <div style="flex:1;">
+        <div style="font-size:0.83rem;font-weight:600;">${u.full_name}</div>
+        <div style="font-family:var(--mono);font-size:0.62rem;color:var(--text-mute);">@${u.username} · ${u.email}</div>
+      </div>
+      <span style="font-family:var(--mono);font-size:0.62rem;color:${u.is_verified ? 'var(--green)' : 'var(--yellow)'};">${u.is_verified ? '✓ Verified' : 'Pending'}</span>
+    </div>
+  `).join('');
+}
+</script>
+{% endblock %}

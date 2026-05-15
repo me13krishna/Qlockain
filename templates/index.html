@@ -1,0 +1,160 @@
+{% extends "base.html" %}
+{% block title %}Qlockain — Blockchain Identity Vault{% endblock %}
+{% block content %}
+
+<!-- Hero -->
+<section class="hero-section">
+  <div class="hero-glow"></div>
+  <div class="container">
+    <div class="row align-items-center g-5">
+      <div class="col-lg-6">
+        <div class="fade-in">
+          <div class="hero-tag">
+            <span style="width:6px;height:6px;border-radius:50%;background:var(--cyan);display:inline-block;animation:pulse-glow 2s infinite;"></span>
+            Blockchain-Secured Identity Platform
+          </div>
+          <h1 class="hero-title">
+            Your Identity.<br>
+            <span class="accent">Immutable.</span><br>
+            Verified.
+          </h1>
+          <p class="hero-subtitle">
+            Qlockain anchors your digital identity and documents to a tamper-proof blockchain. Zero trust. Full control. Military-grade security.
+          </p>
+          <div class="d-flex gap-3 mt-4 flex-wrap">
+            <a href="{{ url_for('register') }}" class="btn-ql-solid" style="padding:0.85rem 2rem;font-size:0.85rem;">
+              <i class="bi bi-shield-plus me-2"></i>Create Identity
+            </a>
+            <a href="{{ url_for('verify') }}" class="btn-ql" style="padding:0.85rem 2rem;font-size:0.85rem;">
+              <i class="bi bi-qr-code-scan me-2"></i>Verify Identity
+            </a>
+          </div>
+        </div>
+      </div>
+      <div class="col-lg-6 fade-in fade-in-2">
+        <!-- Animated blockchain graphic -->
+        <div style="position:relative;padding:2rem;">
+          <div style="background:var(--bg-card);border:1px solid var(--border-2);border-radius:20px;padding:2rem;box-shadow:var(--glow-cyan);">
+            <div style="display:flex;align-items:center;gap:0.75rem;margin-bottom:1.5rem;">
+              <div style="width:10px;height:10px;border-radius:50%;background:var(--red);"></div>
+              <div style="width:10px;height:10px;border-radius:50%;background:var(--yellow);"></div>
+              <div style="width:10px;height:10px;border-radius:50%;background:var(--green);"></div>
+              <span style="font-family:var(--mono);font-size:0.7rem;color:var(--text-mute);margin-left:0.5rem;">qlockain.blockchain</span>
+            </div>
+            <!-- Mini blockchain viz -->
+            {% for i in range(4) %}
+            <div style="background:rgba(0,245,212,0.04);border:1px solid var(--border);border-radius:10px;padding:0.85rem 1rem;margin-bottom:0.6rem;display:flex;align-items:center;gap:1rem;animation:fadeInUp 0.5s ease {{ i * 0.15 }}s both;">
+              <div style="width:36px;height:36px;border-radius:8px;background:rgba(0,245,212,0.1);border:1px solid var(--border-2);display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-size:0.75rem;color:var(--cyan);font-weight:700;">{{ '%02d'|format(i) }}</div>
+              <div style="flex:1;">
+                <div style="font-family:var(--mono);font-size:0.68rem;color:var(--text-dim);">{% if i==0 %}GENESIS{% elif i==1 %}IDENTITY_REG{% elif i==2 %}DOC_UPLOAD{% else %}VERIFICATION{% endif %}</div>
+                <div style="font-family:var(--mono);font-size:0.6rem;color:var(--text-mute);margin-top:2px;">{{ ['0000a1f2...','3b8e92c1...','d47f1a9e...','8c2f5b0d...'][i] }}</div>
+              </div>
+              <div style="width:8px;height:8px;border-radius:50%;background:var(--green);box-shadow:0 0 8px var(--green);"></div>
+            </div>
+            {% endfor %}
+            <div style="text-align:center;margin-top:1rem;">
+              <span class="badge-ql badge-success"><i class="bi bi-check-circle me-1"></i>Chain Integrity: VALID</span>
+            </div>
+          </div>
+          <!-- Floating badges -->
+          <div style="position:absolute;top:-10px;right:0;background:var(--bg-card);border:1px solid var(--border-2);border-radius:10px;padding:0.6rem 1rem;font-family:var(--mono);font-size:0.7rem;color:var(--cyan);box-shadow:var(--glow-cyan);">
+            <i class="bi bi-lock-fill me-1"></i>SHA-256 Secured
+          </div>
+          <div style="position:absolute;bottom:0;left:-10px;background:var(--bg-card);border:1px solid var(--border-2);border-radius:10px;padding:0.6rem 1rem;font-family:var(--mono);font-size:0.7rem;color:var(--green);">
+            <i class="bi bi-shield-check me-1"></i>Tamper Proof
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Stats Bar -->
+<section style="border-top:1px solid var(--border);border-bottom:1px solid var(--border);background:var(--bg-2);padding:2rem 0;">
+  <div class="container">
+    <div class="row g-4 text-center">
+      <div class="col-6 col-md-3 fade-in">
+        <div class="stat-value">{{ stats.users }}+</div>
+        <div class="stat-label">Identities Secured</div>
+      </div>
+      <div class="col-6 col-md-3 fade-in fade-in-1">
+        <div class="stat-value">{{ stats.documents }}+</div>
+        <div class="stat-label">Documents Vaulted</div>
+      </div>
+      <div class="col-6 col-md-3 fade-in fade-in-2">
+        <div class="stat-value">{{ stats.blocks }}+</div>
+        <div class="stat-label">Blocks on Chain</div>
+      </div>
+      <div class="col-6 col-md-3 fade-in fade-in-3">
+        <div class="stat-value">{{ stats.verifications }}+</div>
+        <div class="stat-label">Verifications Done</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Features -->
+<section style="padding:6rem 0;">
+  <div class="container">
+    <div class="text-center mb-5">
+      <div class="section-label">Platform Features</div>
+      <h2 class="section-title" style="font-size:2.5rem;">Built for Security. Designed for Trust.</h2>
+      <p style="color:var(--text-dim);max-width:550px;margin:1rem auto;">Every feature is engineered with blockchain integrity and zero-trust principles.</p>
+    </div>
+    <div class="row g-4">
+      {% set features = [
+        ('bi-person-badge','Digital Identity','Your SHA-256 hashed identity is permanently anchored to the blockchain — immutable and universally verifiable.'),
+        ('bi-folder-lock','Secure Document Vault','Upload PDFs, images, and documents. Each file is hashed and registered on-chain with tamper detection.'),
+        ('bi-boxes','Custom Blockchain','A real proof-of-work blockchain with chain validation, block explorer, and tampering detection built from scratch.'),
+        ('bi-qr-code-scan','QR Verification','Two-factor identity verification using QR code scanning plus password confirmation with live blockchain lookup.'),
+        ('bi-bell','Security Alerts','Real-time alerts for every login, document change, failed attempt, and suspicious activity across your vault.'),
+        ('bi-shield-lock','Admin Control','Powerful admin dashboard to monitor users, documents, blockchain data, and suspicious activity.'),
+      ] %}
+      {% for icon, title, desc in features %}
+      <div class="col-md-6 col-lg-4 fade-in" style="animation-delay:{{ loop.index0 * 0.1 }}s;">
+        <div class="feature-card">
+          <div class="feature-icon"><i class="bi {{ icon }}"></i></div>
+          <div class="feature-title">{{ title }}</div>
+          <div class="feature-desc">{{ desc }}</div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+
+<!-- How It Works -->
+<section style="padding:4rem 0 6rem;background:var(--bg-2);border-top:1px solid var(--border);">
+  <div class="container">
+    <div class="text-center mb-5">
+      <div class="section-label">How It Works</div>
+      <h2 class="section-title" style="font-size:2.2rem;">Three Steps to Secure Identity</h2>
+    </div>
+    <div class="row g-4 align-items-center">
+      {% for num, title, desc in [('01','Register & Hash','Create your account. Qlockain generates a unique SHA-256 identity hash from your credentials.'),('02','Anchor to Chain','Your hash is mined into a proof-of-work block and permanently written to the Qlockain blockchain.'),('03','Verify Anywhere','Anyone can verify your identity in seconds using your QR code or User ID — no central authority needed.')] %}
+      <div class="col-md-4 text-center fade-in" style="animation-delay:{{ loop.index0 * 0.15 }}s;">
+        <div style="width:72px;height:72px;border-radius:50%;border:2px solid var(--border-2);display:flex;align-items:center;justify-content:center;font-family:var(--sans);font-size:1.5rem;font-weight:900;color:var(--cyan);margin:0 auto 1.25rem;">{{ num }}</div>
+        <h4 style="font-family:var(--sans);font-weight:700;margin-bottom:0.5rem;">{{ title }}</h4>
+        <p style="color:var(--text-dim);font-size:0.9rem;max-width:260px;margin:0 auto;">{{ desc }}</p>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+
+<!-- CTA -->
+<section style="padding:6rem 0;">
+  <div class="container text-center">
+    <div class="card-ql" style="max-width:700px;margin:0 auto;padding:3.5rem;background:linear-gradient(135deg,rgba(0,245,212,0.04),rgba(0,102,255,0.04));">
+      <div class="section-label">Get Started Today</div>
+      <h2 style="font-family:var(--sans);font-size:2.2rem;font-weight:900;margin-bottom:1rem;">Own Your Digital Identity.</h2>
+      <p style="color:var(--text-dim);margin-bottom:2rem;">Join the blockchain identity revolution. Your data, your control, your proof.</p>
+      <div class="d-flex gap-3 justify-content-center flex-wrap">
+        <a href="{{ url_for('register') }}" class="btn-ql-solid" style="padding:0.9rem 2.5rem;font-size:0.85rem;"><i class="bi bi-shield-plus me-2"></i>Create Free Account</a>
+        <a href="{{ url_for('blockchain_explorer') }}" class="btn-ql" style="padding:0.9rem 2.5rem;font-size:0.85rem;"><i class="bi bi-boxes me-2"></i>View Blockchain</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+{% endblock %}

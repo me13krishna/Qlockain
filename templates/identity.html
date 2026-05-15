@@ -1,0 +1,142 @@
+{% extends "base.html" %}
+{% block title %}My Identity — Qlockain{% endblock %}
+{% block body %}
+<div class="app-layout">
+  {% include "_sidebar.html" %}
+  <div class="main-content">
+    <div class="mb-4 fade-in">
+      <div class="section-label">Digital Identity</div>
+      <h2 class="section-title" style="font-size:1.6rem;">Your Identity Card</h2>
+    </div>
+
+    <div class="row g-4">
+      <!-- The Card -->
+      <div class="col-lg-5 fade-in fade-in-1">
+        <div class="id-card pulse-glow" id="identityCard">
+          <div class="id-card-header">
+            <div>
+              <div class="id-card-brand">QLOCKAIN</div>
+              <div style="font-family:var(--mono);font-size:0.6rem;color:var(--text-mute);letter-spacing:0.1em;">DIGITAL IDENTITY VAULT</div>
+            </div>
+            <div class="id-card-chip">
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:2px;width:28px;height:20px;">
+                {% for i in range(6) %}<div style="background:rgba(0,0,0,0.3);border-radius:1px;"></div>{% endfor %}
+              </div>
+            </div>
+          </div>
+
+          <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:1rem;margin-bottom:1.25rem;">
+            <div style="flex:1;">
+              <div style="font-family:var(--mono);font-size:0.6rem;color:var(--text-mute);letter-spacing:0.1em;margin-bottom:0.3rem;">FULL NAME</div>
+              <div class="id-card-name">{{ current_user.full_name }}</div>
+              <div class="id-card-uid">UID: {{ current_user.uid[:16].upper() }}</div>
+              <div style="font-family:var(--mono);font-size:0.6rem;color:var(--text-mute);margin-top:0.5rem;">@{{ current_user.username }}</div>
+            </div>
+            {% if current_user.qr_code_path %}
+            <img src="{{ url_for('static', filename=current_user.qr_code_path) }}" class="id-card-qr" alt="QR Code" title="Scan to verify identity"/>
+            {% else %}
+            <div style="width:100px;height:100px;border-radius:8px;border:2px dashed var(--border-2);display:flex;align-items:center;justify-content:center;color:var(--text-mute);font-size:1.5rem;"><i class="bi bi-qr-code"></i></div>
+            {% endif %}
+          </div>
+
+          <div style="margin-bottom:1rem;">
+            <div style="font-family:var(--mono);font-size:0.6rem;color:var(--text-mute);letter-spacing:0.1em;margin-bottom:0.3rem;">IDENTITY HASH</div>
+            <div class="hash-display" style="font-size:0.6rem;">{{ current_user.identity_hash[:32] }}<br>{{ current_user.identity_hash[32:] }}</div>
+          </div>
+
+          <div class="id-card-footer">
+            <div>
+              <div style="font-family:var(--mono);font-size:0.58rem;color:var(--text-mute);">MEMBER SINCE</div>
+              <div style="font-family:var(--mono);font-size:0.72rem;color:var(--text-dim);">{{ current_user.created_at.strftime('%b %Y') }}</div>
+            </div>
+            <div class="verified-badge {% if not current_user.is_verified %}text-warning{% endif %}">
+              {% if current_user.is_verified %}
+              <i class="bi bi-patch-check-fill"></i> BLOCKCHAIN VERIFIED
+              {% else %}
+              <i class="bi bi-clock"></i> PENDING
+              {% endif %}
+            </div>
+          </div>
+        </div>
+
+        <div class="mt-3 d-flex gap-2 flex-wrap">
+          <button onclick="downloadCard()" class="btn-ql" style="padding:0.5rem 1.25rem;font-size:0.75rem;flex:1;"><i class="bi bi-download me-1"></i>Download</button>
+          <a href="{{ url_for('verify') }}" class="btn-ql-solid" style="padding:0.5rem 1.25rem;font-size:0.75rem;flex:1;text-align:center;"><i class="bi bi-shield-check me-1"></i>Verify Now</a>
+        </div>
+      </div>
+
+      <!-- Identity Details -->
+      <div class="col-lg-7 fade-in fade-in-2">
+        <div class="card-ql mb-4">
+          <h5 style="font-family:var(--sans);font-weight:700;margin-bottom:1.25rem;">Identity Details</h5>
+          <div class="row g-3">
+            {% for label, value in [
+              ('Full Name', current_user.full_name),
+              ('Username', '@' + current_user.username),
+              ('Email', current_user.email),
+              ('Phone', current_user.phone),
+              ('Date of Birth', current_user.dob),
+              ('Member Since', current_user.created_at.strftime('%B %d, %Y')),
+            ] %}
+            <div class="col-md-6">
+              <div style="font-family:var(--mono);font-size:0.65rem;letter-spacing:0.1em;text-transform:uppercase;color:var(--text-mute);margin-bottom:0.25rem;">{{ label }}</div>
+              <div style="font-size:0.9rem;color:var(--text);">{{ value }}</div>
+            </div>
+            {% endfor %}
+          </div>
+        </div>
+
+        <div class="card-ql mb-4">
+          <h5 style="font-family:var(--sans);font-weight:700;margin-bottom:1.25rem;">Cryptographic Identity</h5>
+          <div class="mb-3">
+            <div style="font-family:var(--mono);font-size:0.65rem;letter-spacing:0.1em;text-transform:uppercase;color:var(--text-mute);margin-bottom:0.4rem;">Full User ID (UUID)</div>
+            <div class="hash-display">{{ current_user.uid }}</div>
+          </div>
+          <div class="mb-3">
+            <div style="font-family:var(--mono);font-size:0.65rem;letter-spacing:0.1em;text-transform:uppercase;color:var(--text-mute);margin-bottom:0.4rem;">SHA-256 Identity Hash</div>
+            <div class="hash-display">{{ current_user.identity_hash }}</div>
+          </div>
+          <div style="display:flex;align-items:center;gap:0.75rem;flex-wrap:wrap;">
+            <span class="tag"><i class="bi bi-cpu me-1"></i>SHA-256</span>
+            <span class="tag"><i class="bi bi-link-45deg me-1"></i>On-Chain</span>
+            <span class="tag"><i class="bi bi-lock-fill me-1"></i>Immutable</span>
+            {% if current_user.is_verified %}<span class="badge-ql badge-success"><i class="bi bi-check2 me-1"></i>Verified</span>{% endif %}
+          </div>
+        </div>
+
+        <div class="card-ql">
+          <h5 style="font-family:var(--sans);font-weight:700;margin-bottom:1.25rem;">QR Identity Token</h5>
+          {% if current_user.qr_code_path %}
+          <div style="display:flex;align-items:center;gap:1.5rem;flex-wrap:wrap;">
+            <img src="{{ url_for('static', filename=current_user.qr_code_path) }}" width="140" height="140" style="border-radius:10px;border:2px solid var(--border-2);box-shadow:var(--glow-cyan);" alt="QR Code"/>
+            <div>
+              <p style="color:var(--text-dim);font-size:0.85rem;line-height:1.6;margin:0 0 1rem;">This QR code encodes your unique identity token. When scanned, it reveals your User ID and identity hash for instant verification.</p>
+              <div style="font-family:var(--mono);font-size:0.7rem;color:var(--text-mute);">
+                <i class="bi bi-qr-code me-1 text-cyan"></i>Scan using the Verify page or any QR scanner
+              </div>
+            </div>
+          </div>
+          {% else %}
+          <p style="color:var(--text-dim);">QR code not generated. Please contact support.</p>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+{% block extra_js %}
+<script>
+function downloadCard() {
+  const card = document.getElementById('identityCard');
+  // Simple print-based download as fallback
+  const printWindow = window.open('', '_blank');
+  printWindow.document.write(`
+    <html><head><title>Qlockain Identity Card</title>
+    <style>body{margin:0;background:#050a18;display:flex;justify-content:center;align-items:center;min-height:100vh;}</style>
+    </head><body>${card.outerHTML}</body></html>`);
+  printWindow.document.close();
+  printWindow.print();
+}
+</script>
+{% endblock %}

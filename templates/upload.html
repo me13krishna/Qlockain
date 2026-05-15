@@ -1,0 +1,131 @@
+{% extends "base.html" %}
+{% block title %}Upload Document — Qlockain{% endblock %}
+{% block body %}
+<div class="app-layout">
+  {% include "_sidebar.html" %}
+  <div class="main-content">
+    <div class="mb-4 fade-in">
+      <div class="section-label">Secure Vault</div>
+      <h2 class="section-title" style="font-size:1.6rem;">Upload Document</h2>
+    </div>
+
+    <div class="row g-4">
+      <div class="col-lg-7 fade-in fade-in-1">
+        <div class="card-ql mb-4">
+          <h5 style="font-family:var(--sans);font-weight:700;margin-bottom:1.5rem;"><i class="bi bi-cloud-upload text-cyan me-2"></i>Upload to Vault</h5>
+          <form method="POST" action="{{ url_for('upload') }}" enctype="multipart/form-data">
+            <div class="upload-zone" id="dropZone" onclick="document.getElementById('fileInput').click()">
+              <div class="upload-icon"><i class="bi bi-file-earmark-arrow-up"></i></div>
+              <div style="font-family:var(--sans);font-weight:700;font-size:1.1rem;margin-bottom:0.5rem;">Drop file here or click to browse</div>
+              <div style="font-family:var(--mono);font-size:0.72rem;color:var(--text-mute);">Supported: PDF, JPG, PNG, DOCX — Max 16MB</div>
+              <div id="filePreview" style="margin-top:1rem;display:none;">
+                <div style="background:rgba(0,245,212,0.08);border:1px solid var(--border-2);border-radius:8px;padding:0.75rem 1rem;display:inline-flex;align-items:center;gap:0.75rem;">
+                  <i class="bi bi-file-check text-cyan" style="font-size:1.2rem;"></i>
+                  <div>
+                    <div id="fileName" style="font-family:var(--mono);font-size:0.8rem;color:var(--cyan);"></div>
+                    <div id="fileSize" style="font-family:var(--mono);font-size:0.65rem;color:var(--text-mute);"></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <input type="file" id="fileInput" name="file" style="display:none;" accept=".pdf,.jpg,.jpeg,.png,.docx" onchange="previewFile(this)"/>
+            <div class="mt-4">
+              <button type="submit" class="btn-ql-solid w-100" style="padding:0.85rem;font-size:0.85rem;" id="uploadBtn">
+                <i class="bi bi-shield-plus me-2"></i>Secure Upload & Anchor to Blockchain
+              </button>
+            </div>
+          </form>
+        </div>
+
+        <!-- Upload Info -->
+        <div class="card-ql" style="background:rgba(0,245,212,0.02);">
+          <h6 style="font-family:var(--mono);font-size:0.75rem;letter-spacing:0.1em;text-transform:uppercase;color:var(--cyan);margin-bottom:1rem;">What happens when you upload?</h6>
+          <div class="d-flex flex-column gap-3">
+            {% for step, desc in [
+              ('01 — File Received','Your file is securely received and stored in the encrypted vault.'),
+              ('02 — SHA-256 Hash','A unique cryptographic fingerprint is computed from your file.'),
+              ('03 — Block Mined','The hash is mined into a proof-of-work block on the Qlockain chain.'),
+              ('04 — Tamper Detection','Any future modification to the file will be instantly detected.'),
+            ] %}
+            <div style="display:flex;gap:1rem;align-items:flex-start;">
+              <span style="font-family:var(--mono);font-size:0.65rem;color:var(--cyan);white-space:nowrap;padding-top:2px;">{{ step.split(' — ')[0] }}</span>
+              <div>
+                <div style="font-family:var(--sans);font-weight:600;font-size:0.85rem;">{{ step.split(' — ')[1] }}</div>
+                <div style="font-size:0.78rem;color:var(--text-dim);margin-top:0.15rem;">{{ desc }}</div>
+              </div>
+            </div>
+            {% endfor %}
+          </div>
+        </div>
+      </div>
+
+      <!-- Recent Uploads -->
+      <div class="col-lg-5 fade-in fade-in-2">
+        <div class="card-ql">
+          <div class="d-flex align-items-center justify-content-between mb-3">
+            <h5 style="font-family:var(--sans);font-weight:700;font-size:1rem;margin:0;">Recent Uploads</h5>
+            <a href="{{ url_for('documents') }}" class="btn-ql" style="padding:0.3rem 0.85rem;font-size:0.68rem;">View All</a>
+          </div>
+          {% if docs %}
+            {% for doc in docs[:6] %}
+            <div style="display:flex;align-items:center;gap:0.75rem;padding:0.75rem 0;border-bottom:1px solid var(--border);{% if loop.last %}border:none;{% endif %}">
+              <div style="width:36px;height:36px;border-radius:8px;background:rgba(0,245,212,0.06);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;">
+                <i class="bi bi-file-earmark-{% if doc.file_type=='PDF' %}pdf text-danger{% elif doc.file_type in ['JPG','JPEG','PNG'] %}image text-cyan{% else %}word text-blue{% endif %}"></i>
+              </div>
+              <div style="flex:1;min-width:0;">
+                <div style="font-size:0.82rem;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">{{ doc.original_name }}</div>
+                <div style="font-family:var(--mono);font-size:0.62rem;color:var(--text-mute);">{{ (doc.file_size/1024)|round(1) }} KB · Block #{{ doc.blockchain_block }}</div>
+              </div>
+              <a href="{{ url_for('download_doc', doc_id=doc.id) }}" style="color:var(--text-dim);font-size:0.85rem;flex-shrink:0;" title="Download"><i class="bi bi-download"></i></a>
+            </div>
+            {% endfor %}
+          {% else %}
+          <div style="text-align:center;padding:2rem;color:var(--text-mute);">
+            <i class="bi bi-inbox" style="font-size:2rem;display:block;margin-bottom:0.5rem;"></i>
+            <div style="font-family:var(--mono);font-size:0.75rem;">Vault is empty</div>
+          </div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+{% block extra_js %}
+<script>
+function previewFile(input) {
+  const preview = document.getElementById('filePreview');
+  const fileName = document.getElementById('fileName');
+  const fileSize = document.getElementById('fileSize');
+  if (input.files && input.files[0]) {
+    const file = input.files[0];
+    fileName.textContent = file.name;
+    fileSize.textContent = (file.size / 1024).toFixed(1) + ' KB';
+    preview.style.display = 'block';
+  }
+}
+
+const dropZone = document.getElementById('dropZone');
+const fileInput = document.getElementById('fileInput');
+
+['dragenter','dragover'].forEach(e => {
+  dropZone.addEventListener(e, (ev) => { ev.preventDefault(); dropZone.classList.add('dragover'); });
+});
+['dragleave','drop'].forEach(e => {
+  dropZone.addEventListener(e, (ev) => { ev.preventDefault(); dropZone.classList.remove('dragover'); });
+});
+dropZone.addEventListener('drop', (ev) => {
+  const files = ev.dataTransfer.files;
+  if (files.length) {
+    fileInput.files = files;
+    previewFile(fileInput);
+  }
+});
+
+document.querySelector('form').addEventListener('submit', () => {
+  const btn = document.getElementById('uploadBtn');
+  btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Uploading & Mining Block...';
+  btn.disabled = true;
+});
+</script>
+{% endblock %}

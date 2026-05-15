@@ -1,0 +1,74 @@
+{% extends "base.html" %}
+{% block title %}Alerts Center — Qlockain{% endblock %}
+{% block body %}
+<div class="app-layout">
+  {% include "_sidebar.html" %}
+  <div class="main-content">
+    <div class="d-flex align-items-center justify-content-between mb-4 fade-in">
+      <div>
+        <div class="section-label">Security</div>
+        <h2 class="section-title" style="font-size:1.6rem;">Alerts Center</h2>
+      </div>
+      <div style="font-family:var(--mono);font-size:0.72rem;color:var(--text-mute);">{{ alerts|length }} total alerts</div>
+    </div>
+
+    <!-- Filter Tabs -->
+    <div style="display:flex;gap:0.5rem;margin-bottom:1.5rem;flex-wrap:wrap;" class="fade-in fade-in-1">
+      <button class="admin-tab active" onclick="filterAlerts('all', this)">All</button>
+      <button class="admin-tab" onclick="filterAlerts('danger', this)">🔴 Critical</button>
+      <button class="admin-tab" onclick="filterAlerts('warning', this)">🟡 Warnings</button>
+      <button class="admin-tab" onclick="filterAlerts('success', this)">🟢 Success</button>
+      <button class="admin-tab" onclick="filterAlerts('info', this)">🔵 Info</button>
+    </div>
+
+    {% if alerts %}
+    <div id="alertsList" class="fade-in fade-in-2">
+      {% for alert in alerts %}
+      <div class="alert-item" data-severity="{{ alert.severity }}" style="{% if not alert.is_read %}border-color:rgba(0,245,212,0.2);{% endif %}">
+        <div class="alert-icon {{ alert.severity }}">
+          {% if alert.severity == 'success' %}<i class="bi bi-check-circle-fill"></i>
+          {% elif alert.severity == 'danger' %}<i class="bi bi-exclamation-triangle-fill"></i>
+          {% elif alert.severity == 'warning' %}<i class="bi bi-exclamation-circle-fill"></i>
+          {% else %}<i class="bi bi-info-circle-fill"></i>{% endif %}
+        </div>
+        <div style="flex:1;min-width:0;">
+          <div style="display:flex;align-items:center;gap:0.5rem;flex-wrap:wrap;">
+            <div class="alert-title">{{ alert.title }}</div>
+            <span class="badge-ql badge-{{ alert.severity }}" style="font-size:0.58rem;">{{ alert.alert_type }}</span>
+            {% if not alert.is_read %}<span class="badge-ql badge-cyan" style="font-size:0.55rem;">NEW</span>{% endif %}
+          </div>
+          <div class="alert-msg">{{ alert.message }}</div>
+          <div style="display:flex;gap:1.25rem;margin-top:0.4rem;flex-wrap:wrap;">
+            <div class="alert-time"><i class="bi bi-clock me-1"></i>{{ alert.created_at.strftime('%Y-%m-%d %H:%M:%S') }}</div>
+            {% if alert.ip_address %}<div class="alert-time"><i class="bi bi-geo me-1"></i>{{ alert.ip_address }}</div>{% endif %}
+            {% if alert.user_agent %}<div class="alert-time" title="{{ alert.user_agent }}"><i class="bi bi-display me-1"></i>{{ alert.user_agent[:40] }}{% if alert.user_agent|length > 40 %}...{% endif %}</div>{% endif %}
+          </div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+    {% else %}
+    <div class="card-ql fade-in" style="text-align:center;padding:5rem 2rem;">
+      <i class="bi bi-bell-slash" style="font-size:3.5rem;color:var(--border-2);display:block;margin-bottom:1.25rem;"></i>
+      <h4 style="font-family:var(--sans);font-weight:700;margin-bottom:0.5rem;">No alerts yet</h4>
+      <p style="color:var(--text-dim);font-size:0.85rem;">Security events will appear here as you use your vault.</p>
+    </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}
+{% block extra_js %}
+<script>
+function filterAlerts(severity, btn) {
+  document.querySelectorAll('.admin-tab').forEach(t => t.classList.remove('active'));
+  btn.classList.add('active');
+  document.querySelectorAll('.alert-item').forEach(item => {
+    if (severity === 'all' || item.dataset.severity === severity) {
+      item.style.display = 'flex';
+    } else {
+      item.style.display = 'none';
+    }
+  });
+}
+</script>
+{% endblock %}

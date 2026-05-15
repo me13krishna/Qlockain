@@ -1,0 +1,160 @@
+{% extends "base.html" %}
+{% block title %}Verify Identity — Qlockain{% endblock %}
+{% block content %}
+<div style="min-height:calc(100vh - 60px);padding:3rem 1rem;">
+  <div class="container" style="max-width:680px;">
+    <div class="text-center mb-4 fade-in">
+      <div class="section-label">Two-Factor Verification</div>
+      <h2 class="section-title" style="font-size:2rem;">Identity Verification</h2>
+      <p style="color:var(--text-dim);font-size:0.9rem;max-width:480px;margin:0.5rem auto;">A two-step process that verifies your identity against the immutable blockchain record.</p>
+    </div>
+
+    <!-- Step Indicator -->
+    <div class="step-indicator fade-in fade-in-1">
+      <div class="step {% if step >= 1 %}{% if step > 1 %}done{% else %}active{% endif %}{% endif %}">
+        <div class="step-circle">{% if step > 1 %}<i class="bi bi-check-lg"></i>{% else %}01{% endif %}</div>
+        <div class="step-label">Identify</div>
+      </div>
+      <div class="step-line"></div>
+      <div class="step {% if step >= 2 %}{% if step > 2 %}done{% else %}active{% endif %}{% endif %}">
+        <div class="step-circle">{% if step > 2 %}<i class="bi bi-check-lg"></i>{% else %}02{% endif %}</div>
+        <div class="step-label">Authenticate</div>
+      </div>
+      <div class="step-line"></div>
+      <div class="step {% if step >= 3 %}active{% endif %}">
+        <div class="step-circle">03</div>
+        <div class="step-label">Result</div>
+      </div>
+    </div>
+
+    <!-- Step 1: Enter ID -->
+    {% if step == 1 %}
+    <div class="card-ql fade-in fade-in-2">
+      <div class="d-flex align-items-center gap-3 mb-4">
+        <div style="width:44px;height:44px;border-radius:50%;background:rgba(0,245,212,0.1);border:2px solid var(--border-2);display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-weight:700;color:var(--cyan);">01</div>
+        <div>
+          <h5 style="font-family:var(--sans);font-weight:700;margin:0;">Identity Lookup</h5>
+          <p style="color:var(--text-dim);font-size:0.82rem;margin:0;">Enter the User ID or Username to verify</p>
+        </div>
+      </div>
+      <form method="POST" action="{{ url_for('verify') }}" class="form-ql">
+        <input type="hidden" name="step" value="1"/>
+        <div class="mb-4">
+          <label>User ID or Username</label>
+          <div style="position:relative;">
+            <input type="text" name="uid_input" placeholder="e.g. a3f5b2c1-... or @username" required style="padding-left:2.75rem;"/>
+            <i class="bi bi-person-badge" style="position:absolute;left:0.85rem;top:50%;transform:translateY(-50%);color:var(--text-mute);"></i>
+          </div>
+          <div style="font-family:var(--mono);font-size:0.65rem;color:var(--text-mute);margin-top:0.4rem;">You can find your User ID on your Digital Identity Card</div>
+        </div>
+        <button type="submit" class="btn-ql-solid w-100" style="padding:0.85rem;">
+          <i class="bi bi-search me-2"></i>Find Identity
+        </button>
+      </form>
+    </div>
+
+    <!-- Step 2: Password -->
+    {% elif step == 2 %}
+    <div class="card-ql fade-in fade-in-2">
+      <!-- Found user preview -->
+      {% if target_user %}
+      <div style="background:rgba(0,245,212,0.04);border:1px solid var(--border-2);border-radius:10px;padding:1rem 1.25rem;margin-bottom:1.5rem;display:flex;align-items:center;gap:1rem;">
+        <div style="width:40px;height:40px;border-radius:50%;background:linear-gradient(135deg,var(--cyan),var(--blue));display:flex;align-items:center;justify-content:center;font-family:var(--sans);font-weight:800;font-size:1rem;color:var(--bg);flex-shrink:0;">{{ target_user.full_name[0].upper() }}</div>
+        <div>
+          <div style="font-family:var(--sans);font-weight:700;">{{ target_user.full_name }}</div>
+          <div style="font-family:var(--mono);font-size:0.68rem;color:var(--cyan);">@{{ target_user.username }} · {{ target_user.get_short_uid() }}</div>
+        </div>
+        <span class="badge-ql {% if target_user.is_verified %}badge-success{% else %}badge-warning{% endif %} ms-auto" style="font-size:0.6rem;">
+          {% if target_user.is_verified %}On-Chain{% else %}Pending{% endif %}
+        </span>
+      </div>
+      {% endif %}
+
+      <div class="d-flex align-items-center gap-3 mb-4">
+        <div style="width:44px;height:44px;border-radius:50%;background:rgba(0,245,212,0.1);border:2px solid var(--border-2);display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-weight:700;color:var(--cyan);">02</div>
+        <div>
+          <h5 style="font-family:var(--sans);font-weight:700;margin:0;">Password Authentication</h5>
+          <p style="color:var(--text-dim);font-size:0.82rem;margin:0;">Enter account password to proceed</p>
+        </div>
+      </div>
+
+      <form method="POST" action="{{ url_for('verify') }}" class="form-ql">
+        <input type="hidden" name="step" value="2"/>
+        <input type="hidden" name="uid_input" value="{{ uid_input }}"/>
+        <div class="mb-4">
+          <label>Account Password</label>
+          <div style="position:relative;">
+            <input type="password" name="verify_password" id="vPw" placeholder="Enter account password" required style="padding-left:2.75rem;"/>
+            <i class="bi bi-key" style="position:absolute;left:0.85rem;top:50%;transform:translateY(-50%);color:var(--text-mute);"></i>
+          </div>
+        </div>
+        <div class="d-flex gap-3">
+          <a href="{{ url_for('verify') }}" class="btn-ql" style="padding:0.7rem 1.5rem;flex:1;text-align:center;font-size:0.78rem;">
+            <i class="bi bi-arrow-left me-1"></i>Back
+          </a>
+          <button type="submit" class="btn-ql-solid" style="padding:0.7rem 1.5rem;flex:2;font-size:0.78rem;">
+            <i class="bi bi-shield-lock-fill me-2"></i>Verify on Blockchain
+          </button>
+        </div>
+      </form>
+    </div>
+
+    <!-- Step 3: Result -->
+    {% elif step == 3 %}
+    <div class="fade-in fade-in-2">
+      <div class="verify-result {{ result|lower }}">
+        <div class="verify-icon">
+          {% if result == 'VERIFIED' %}✅
+          {% elif result == 'TAMPERED' %}🚨
+          {% else %}⚠️
+          {% endif %}
+        </div>
+        <div class="verify-status">{{ result }}</div>
+        <p style="color:var(--text-dim);font-size:0.9rem;margin-bottom:1.5rem;">
+          {% if result == 'VERIFIED' %}
+            Identity successfully verified against the blockchain. No tampering detected. The hash matches the original registration record.
+          {% elif result == 'TAMPERED' %}
+            SECURITY ALERT: Identity hash mismatch detected! The stored hash does not match the blockchain record. This identity may have been compromised.
+          {% else %}
+            This identity could not be found on the blockchain. The user ID may be invalid or was never registered.
+          {% endif %}
+        </p>
+
+        {% if target_user %}
+        <div style="background:rgba(0,0,0,0.3);border-radius:10px;padding:1rem;margin-bottom:1.5rem;text-align:left;">
+          <div style="font-family:var(--mono);font-size:0.65rem;letter-spacing:0.1em;text-transform:uppercase;color:var(--text-mute);margin-bottom:0.75rem;">Verified Subject</div>
+          <div style="font-family:var(--sans);font-weight:700;margin-bottom:0.25rem;">{{ target_user.full_name }}</div>
+          <div style="font-family:var(--mono);font-size:0.72rem;color:var(--text-dim);">@{{ target_user.username }} · {{ target_user.uid[:16] }}</div>
+          <div class="hash-display mt-2" style="font-size:0.6rem;text-align:left;">{{ target_user.identity_hash }}</div>
+        </div>
+        {% endif %}
+
+        {% if block_data %}
+        <div style="background:rgba(0,0,0,0.3);border-radius:10px;padding:1rem;margin-bottom:1.5rem;text-align:left;">
+          <div style="font-family:var(--mono);font-size:0.65rem;letter-spacing:0.1em;text-transform:uppercase;color:var(--text-mute);margin-bottom:0.75rem;">Blockchain Record</div>
+          <div style="display:flex;gap:2rem;flex-wrap:wrap;">
+            <div><div style="font-family:var(--mono);font-size:0.6rem;color:var(--text-mute);">BLOCK</div><div style="font-family:var(--mono);font-size:0.85rem;color:var(--cyan);">#{{ block_data.index }}</div></div>
+            <div><div style="font-family:var(--mono);font-size:0.6rem;color:var(--text-mute);">NONCE</div><div style="font-family:var(--mono);font-size:0.85rem;color:var(--cyan);">{{ block_data.nonce }}</div></div>
+            <div><div style="font-family:var(--mono);font-size:0.6rem;color:var(--text-mute);">TIMESTAMP</div><div style="font-family:var(--mono);font-size:0.85rem;color:var(--cyan);">{{ block_data.timestamp_readable }}</div></div>
+          </div>
+          <div class="hash-display mt-2" style="font-size:0.58rem;text-align:left;">Block Hash: {{ block_data.hash }}</div>
+        </div>
+        {% endif %}
+
+        <div class="d-flex gap-3 justify-content-center flex-wrap">
+          <a href="{{ url_for('verify') }}" class="btn-ql" style="padding:0.65rem 1.5rem;font-size:0.78rem;"><i class="bi bi-arrow-repeat me-1"></i>Verify Another</a>
+          {% if current_user.is_authenticated %}
+          <a href="{{ url_for('blockchain_explorer') }}" class="btn-ql-solid" style="padding:0.65rem 1.5rem;font-size:0.78rem;"><i class="bi bi-boxes me-1"></i>View Blockchain</a>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+    {% endif %}
+
+    <!-- Info Banner -->
+    <div style="margin-top:2rem;text-align:center;font-family:var(--mono);font-size:0.68rem;color:var(--text-mute);">
+      <i class="bi bi-lock-fill me-1 text-cyan"></i>This verification is logged and anchored to the blockchain for audit purposes.
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+{% block title %}Login — Qlockain{% endblock %}
+{% block content %}
+<div style="min-height:calc(100vh - 60px);display:flex;align-items:center;justify-content:center;padding:3rem 1rem;">
+  <div style="width:100%;max-width:440px;">
+    <div class="text-center mb-4 fade-in">
+      <div style="width:64px;height:64px;border-radius:50%;border:2px solid var(--border-2);display:flex;align-items:center;justify-content:center;margin:0 auto 1rem;font-size:1.8rem;background:rgba(0,245,212,0.05);">🔐</div>
+      <h1 style="font-family:var(--sans);font-size:2rem;font-weight:800;">Welcome Back</h1>
+      <p style="color:var(--text-dim);font-size:0.88rem;margin-top:0.4rem;">Sign in to access your identity vault</p>
+    </div>
+
+    <div class="card-ql fade-in fade-in-1">
+      <form method="POST" action="{{ url_for('login') }}" class="form-ql">
+        <div class="mb-3">
+          <label>Username</label>
+          <input type="text" name="username" placeholder="Your username" required autocomplete="username" autofocus/>
+        </div>
+        <div class="mb-3">
+          <label>Password</label>
+          <div style="position:relative;">
+            <input type="password" name="password" id="loginPw" placeholder="Your password" required autocomplete="current-password" style="padding-right:2.5rem;"/>
+            <button type="button" onclick="togglePw()" style="position:absolute;right:0.75rem;top:50%;transform:translateY(-50%);background:none;border:none;color:var(--text-mute);cursor:pointer;"><i class="bi bi-eye" id="eyeIcon"></i></button>
+          </div>
+        </div>
+        <div class="d-flex align-items-center justify-content-between mb-4">
+          <label style="display:flex;align-items:center;gap:0.5rem;cursor:pointer;font-family:var(--mono);font-size:0.72rem;letter-spacing:normal;text-transform:none;color:var(--text-dim);">
+            <input type="checkbox" name="remember" style="width:14px;height:14px;accent-color:var(--cyan);"/> Remember me
+          </label>
+          <a href="#" style="font-family:var(--mono);font-size:0.72rem;color:var(--cyan);text-decoration:none;">Forgot password?</a>
+        </div>
+        <button type="submit" class="btn-ql-solid w-100" style="padding:0.85rem;font-size:0.85rem;">
+          <i class="bi bi-shield-lock me-2"></i>Access Vault
+        </button>
+      </form>
+      <div class="divider"></div>
+
+      <!-- Demo credentials hint -->
+      <div style="background:rgba(0,245,212,0.03);border:1px solid var(--border);border-radius:8px;padding:0.85rem 1rem;margin-bottom:1rem;">
+        <div style="font-family:var(--mono);font-size:0.65rem;letter-spacing:0.1em;text-transform:uppercase;color:var(--text-mute);margin-bottom:0.5rem;">Admin Access</div>
+        <div style="font-family:var(--mono);font-size:0.78rem;color:var(--text-dim);">Username: <span class="text-cyan">admin</span> &nbsp; Password: <span class="text-cyan">Admin@123</span></div>
+      </div>
+
+      <p class="text-center" style="font-size:0.85rem;color:var(--text-dim);">No account? <a href="{{ url_for('register') }}" class="text-cyan" style="text-decoration:none;font-weight:600;">Create Identity</a></p>
+    </div>
+
+    <div style="text-align:center;margin-top:1.5rem;font-family:var(--mono);font-size:0.68rem;color:var(--text-mute);">
+      <i class="bi bi-lock-fill me-1 text-cyan"></i>All sessions are encrypted and monitored for security
+    </div>
+  </div>
+</div>
+{% endblock %}
+{% block extra_js %}
+<script>
+function togglePw() {
+  const input = document.getElementById('loginPw');
+  const icon = document.getElementById('eyeIcon');
+  input.type = input.type === 'password' ? 'text' : 'password';
+  icon.className = input.type === 'password' ? 'bi bi-eye' : 'bi bi-eye-slash';
+}
+</script>
+{% endblock %}

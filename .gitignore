@@ -1,0 +1,33 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+venv/
+env/
+.venv/
+
+# Database
+database/*.db
+database/*.sqlite
+
+# Uploads (user files - don't commit)
+static/uploads/*
+!static/uploads/.gitkeep
+static/qr_codes/*
+!static/qr_codes/.gitkeep
+
+# Environment
+.env
+*.env
+instance/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+
+# OS
+.DS_Store
+Thumbs.db
